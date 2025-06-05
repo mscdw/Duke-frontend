@@ -104,8 +104,8 @@ if search:
         if appearance_search_type == "appearances":
             appearances = {appearances_type: appearances_value}
             payload = {
-                "from": from_time,
-                "to": to_time,
+                "from_time": from_time,
+                "to_time": to_time,
                 "appearances": appearances,
                 "cameraIds": selected_camera_ids,
                 "limit": limit,
@@ -114,8 +114,8 @@ if search:
             endpoint = f"{API_BASE}/appearance-search"
         elif appearance_search_type == "querydescriptors":
             payload = {
-                "from": from_time,
-                "to": to_time,
+                "from_time": from_time,
+                "to_time": to_time,
                 "queryDescriptors": query_descriptors_selected,
                 "cameraIds": selected_camera_ids,
                 "limit": limit,
