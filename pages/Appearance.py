@@ -1,10 +1,10 @@
 import streamlit as st
-import requests
 import json
 import io
 from PIL import Image
 from collections import defaultdict
 import base64
+from utils.api_logger import logged_request, show_api_logs
 
 st.set_page_config(page_title="Appearance Search", layout="wide")
 st.title("Avigilon Appearance Search")
@@ -16,15 +16,19 @@ from_time = st.sidebar.text_input("From (ISO 8601)", "2025-05-01")
 to_time = st.sidebar.text_input("To (ISO 8601)", "2025-05-30")
 limit = st.sidebar.number_input("Limit", min_value=1, max_value=100, value=5)
 scan_type = st.sidebar.selectbox("Scan Type", ["FULL", "FAST"])
-try:
-    cameras_resp = requests.get(f"{API_BASE}/cameras")
-    cameras = []
-    if cameras_resp.ok:
-        cameras_data = cameras_resp.json()
-        cameras_list = cameras_data.get("result", {}).get("cameras", [])
-        cameras = [(s.get("name"), s.get("id")) for s in cameras_list]
-except Exception:
-    cameras = []
+
+if 'cameras' not in st.session_state:
+    try:
+        cameras_resp = logged_request("get", f"{API_BASE}/cameras")
+        cameras = []
+        if cameras_resp.ok:
+            cameras_data = cameras_resp.json()
+            cameras_list = cameras_data.get("result", {}).get("cameras", [])
+            cameras = [(s.get("name"), s.get("id")) for s in cameras_list]
+        st.session_state['cameras'] = cameras
+    except Exception:
+        st.session_state['cameras'] = []
+cameras = st.session_state['cameras']
 selected_camera_ids = st.sidebar.multiselect(
     "Camera IDs",
     options=[cam[1] for cam in cameras],
@@ -70,16 +74,17 @@ if appearance_search_type == "appearances":
         except Exception:
             appearances_value = []
 elif appearance_search_type == "querydescriptors":
-    try:
-        desc_resp = requests.get(f"{API_BASE}/appearance-descriptions")
-        desc_options = []
-        if desc_resp.ok:
-            desc_data = desc_resp.json()
-            desc_options = desc_data['result']
-        else:
+    if 'appearance_descriptions' not in st.session_state:
+        try:
+            desc_resp = logged_request("get", f"{API_BASE}/appearance-descriptions")
             desc_options = []
-    except Exception:
-        desc_options = []
+            if desc_resp.ok:
+                desc_data = desc_resp.json()
+                desc_options = desc_data['result']
+            st.session_state['appearance_descriptions'] = desc_options
+        except Exception:
+            st.session_state['appearance_descriptions'] = []
+    desc_options = st.session_state['appearance_descriptions']
     facet_to_tags = defaultdict(list)
     for d in desc_options:
         facet_to_tags[d['facet']].append(d['tag'])
@@ -123,7 +128,7 @@ if search:
             }
             endpoint = f"{API_BASE}/appearance-search-by-description"
         with st.spinner("Searching appearances..."):
-            resp = requests.post(endpoint, json=payload)
+            resp = logged_request("post", endpoint, json=payload)
             data = resp.json()
             results = data.get('result',{}).get('results',{})
             token = data.get('result',{}).get('token')
@@ -161,7 +166,7 @@ if st.session_state.get('appearance_results') is not None:
                             }
                             with st.spinner("Fetching and cropping image to ROI..."):
                                 try:
-                                    media_resp = requests.get(f"{API_BASE}/media", params=params)
+                                    media_resp = logged_request("get", f"{API_BASE}/media", params=params)
                                     media_resp.raise_for_status()
                                     image = Image.open(io.BytesIO(media_resp.content))
                                     st.image(image)
@@ -201,7 +206,7 @@ if st.session_state.get('appearance_results') is not None:
                             "token": st.session_state['appearance_token']
                         }
                         endpoint = f"{API_BASE}/appearance-search-by-description"
-                    resp = requests.post(endpoint, json=payload)
+                    resp = logged_request("post", endpoint, json=payload)
                     data = resp.json()
                     more_results = data.get('result',{}).get('results',{})
                     new_token = data.get('result',{}).get('token')
@@ -217,3 +222,5 @@ if st.session_state.get('appearance_results') is not None:
                         st.info("No more appearances found.")
                 except Exception as e:
                     st.error(f"Error: {e}")
+
+show_api_logs()

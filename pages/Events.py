@@ -1,8 +1,8 @@
 import streamlit as st
-import requests
 import pandas as pd
 from datetime import datetime
 import json
+from utils.api_logger import logged_request, show_api_logs
 
 st.set_page_config(page_title="Events", layout="wide")
 st.title("Avigilon Server Events Dashboard")
@@ -11,23 +11,29 @@ API_URL = st.secrets.get("API_URL", "http://localhost:8000/api")
 
 st.sidebar.header("Event Search Settings")
 
-servers = []
-event_subtopics = []
-try:
-    servers_resp = requests.get(f"{API_URL}/servers")
-    if servers_resp.ok:
-        servers_data = servers_resp.json()
-        servers_list = servers_data.get("result", {}).get("servers", [])
-        servers = [(s.get("name"), s.get("id")) for s in servers_list]
-except Exception:
-    servers = []
-try:
-    topics_resp = requests.get(f"{API_URL}/event-subtopics")
-    if topics_resp.ok:
-        topics_data = topics_resp.json()
-        event_subtopics = topics_data.get("result", [])
-except Exception:
-    event_subtopics = []
+if 'servers' not in st.session_state:
+    try:
+        servers_resp = logged_request("get", f"{API_URL}/servers")
+        servers = []
+        if servers_resp.ok:
+            servers_data = servers_resp.json()
+            servers_list = servers_data.get("result", {}).get("servers", [])
+            servers = [(s.get("name"), s.get("id")) for s in servers_list]
+        st.session_state['servers'] = servers
+    except Exception:
+        st.session_state['servers'] = []
+servers = st.session_state['servers']
+if 'event_subtopics' not in st.session_state:
+    try:
+        topics_resp = logged_request("get", f"{API_URL}/event-subtopics")
+        event_subtopics = []
+        if topics_resp.ok:
+            topics_data = topics_resp.json()
+            event_subtopics = topics_data.get("result", [])
+        st.session_state['event_subtopics'] = event_subtopics
+    except Exception:
+        st.session_state['event_subtopics'] = []
+event_subtopics = st.session_state['event_subtopics']
 
 query_type = st.sidebar.selectbox("Query Type", ["TIME_RANGE", "ACTIVE"])
 server_id = st.sidebar.selectbox("Server ID", options=[s[1] for s in servers], format_func=lambda x: next((name for name, id_ in servers if id_ == x), x))
@@ -61,7 +67,7 @@ if st.button("Search Events"):
         }
     with st.spinner("Fetching events from server..."):
         try:
-            resp = requests.get(f"{API_URL}/events-search", params=params)
+            resp = logged_request("get", f"{API_URL}/events-search", params=params)
             resp.raise_for_status()
             data = resp.json()
             events = data['result']['events']
@@ -109,7 +115,7 @@ if st.session_state.get('events_df') is not None:
                                     }
                                     if fetch_type == "JSON":
                                         params['format'] = 'json'
-                                    media_resp = requests.get(f"{API_URL}/media", params=params)
+                                    media_resp = logged_request("get", f"{API_URL}/media", params=params)
                                     media_resp.raise_for_status()
                                     if fetch_type == "Video":
                                         st.video(media_resp.content)
@@ -133,7 +139,7 @@ if st.session_state.get('events_df') is not None:
                         "query_type": "CONTINUE",
                         "token": st.session_state['events_token']
                     }
-                    continue_resp = requests.get(f"{API_URL}/events-search", params=continue_params)
+                    continue_resp = logged_request("get", f"{API_URL}/events-search", params=continue_params)
                     continue_resp.raise_for_status()
                     continue_data = continue_resp.json()
                     more_events = continue_data['result'].get('events', [])
@@ -153,3 +159,5 @@ if st.session_state.get('events_df') is not None:
                     st.error(f"Failed to fetch more events: {e}")
 else:
     st.info("Fill in the parameters and click 'Search Events' to load data.")
+
+show_api_logs()

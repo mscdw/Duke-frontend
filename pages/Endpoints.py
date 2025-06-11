@@ -1,5 +1,5 @@
 import streamlit as st
-import requests
+from utils.api_logger import logged_request, show_api_logs
 
 st.set_page_config(page_title="Avigilon Endpoints", layout="wide")
 st.title("Avigilon API Endpoints Explorer")
@@ -28,17 +28,25 @@ for name, path, method in endpoints:
             if st.button(f"Fetch {name}"):
                 with st.spinner(f"Fetching {name}..."):
                     try:
-                        resp = requests.get(url, params=params)
+                        resp = logged_request("get", url, params=params)
                         st.write(f"Status: {resp.status_code}")
-                        st.json(resp.json() if resp.headers.get("content-type","").startswith("application/json") else resp.text)
+                        if resp.headers.get("content-type", "").startswith("application/json"):
+                            st.json(resp.json())
+                        else:
+                            st.code(resp.text)
                     except Exception as e:
                         st.error(f"Error: {e}")
         else:
             if st.button(f"Fetch {name}"):
                 with st.spinner(f"Fetching {name}..."):
                     try:
-                        resp = requests.get(url)
+                        resp = logged_request("get", url)
                         st.write(f"Status: {resp.status_code}")
-                        st.json(resp.json() if resp.headers.get("content-type","").startswith("application/json") else resp.text)
+                        if resp.headers.get("content-type", "").startswith("application/json"):
+                            st.json(resp.json())
+                        else:
+                            st.code(resp.text)
                     except Exception as e:
                         st.error(f"Error: {e}")
+
+show_api_logs()

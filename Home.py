@@ -13,4 +13,5 @@ Welcome to the Avigilon API Explorer and Events Dashboard.
 **Pages:**
 - Endpoints: Interact with all Avigilon API endpoints.
 - Events: Visualize events from all servers.
+- Appearances: Visulaize appearance events from all servers.
 """)
