@@ -4,7 +4,8 @@ import io
 from PIL import Image
 from collections import defaultdict
 import base64
-from utils.api_logger import logged_request, show_api_logs
+from utils.api_logger import logged_request
+from utils.setup import global_page_setup
 
 st.set_page_config(page_title="Appearance Search", layout="wide")
 st.title("Avigilon Appearance Search")
@@ -223,4 +224,4 @@ if st.session_state.get('appearance_results') is not None:
                 except Exception as e:
                     st.error(f"Error: {e}")
 
-show_api_logs()
+global_page_setup()

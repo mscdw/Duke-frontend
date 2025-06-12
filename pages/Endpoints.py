@@ -1,5 +1,6 @@
 import streamlit as st
-from utils.api_logger import logged_request, show_api_logs
+from utils.api_logger import logged_request
+from utils.setup import global_page_setup
 
 st.set_page_config(page_title="Avigilon Endpoints", layout="wide")
 st.title("Avigilon API Endpoints Explorer")
@@ -49,4 +50,4 @@ for name, path, method in endpoints:
                     except Exception as e:
                         st.error(f"Error: {e}")
 
-show_api_logs()
+global_page_setup()

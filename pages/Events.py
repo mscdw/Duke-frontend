@@ -2,7 +2,8 @@ import streamlit as st
 import pandas as pd
 from datetime import datetime
 import json
-from utils.api_logger import logged_request, show_api_logs
+from utils.api_logger import logged_request
+from utils.setup import global_page_setup
 
 st.set_page_config(page_title="Events", layout="wide")
 st.title("Avigilon Server Events Dashboard")
@@ -160,4 +161,4 @@ if st.session_state.get('events_df') is not None:
 else:
     st.info("Fill in the parameters and click 'Search Events' to load data.")
 
-show_api_logs()
+global_page_setup()
