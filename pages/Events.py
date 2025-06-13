@@ -38,19 +38,20 @@ event_subtopics = st.session_state['event_subtopics']
 
 query_type = st.sidebar.selectbox("Query Type", ["TIME_RANGE", "ACTIVE"])
 server_id = st.sidebar.selectbox("Server ID", options=[s[1] for s in servers], format_func=lambda x: next((name for name, id_ in servers if id_ == x), x))
-from_date = st.sidebar.date_input("From Date", datetime(2025, 5, 1))
-to_date = st.sidebar.date_input("To Date", datetime(2025, 5, 30))
+from_date = st.sidebar.date_input("From Date", datetime(2025, 6, 1))
+to_date = st.sidebar.date_input("To Date", datetime(2025, 6, 30))
 from_time = datetime.combine(from_date, datetime.min.time()).isoformat() + ".000Z"
 to_time = datetime.combine(to_date, datetime.min.time()).isoformat() + ".000Z"
-limit = st.sidebar.number_input("Limit",  value=50)
+limit = st.sidebar.number_input("Limit",  value=50, min_value=1, max_value=1000)
 event_topics = st.sidebar.selectbox("Event Topics", event_subtopics)
+search_clicked = st.sidebar.button("Search Events")
 
 if 'events_df' not in st.session_state:
     st.session_state['events_df'] = None
 if 'events_token' not in st.session_state:
     st.session_state['events_token'] = None
 
-if st.button("Search Events"):
+if search_clicked:
     if(query_type == "ACTIVE"):
         params = {
             "query_type": "ACTIVE",

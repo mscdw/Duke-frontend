@@ -7,5 +7,8 @@ def apply_global_styles():
         ::-webkit-scrollbar {
             width: 14px;
         }
+        ::-webkit-scrollbar-thumb {
+            height: 120px;
+        }
         </style>
     """, unsafe_allow_html=True)
