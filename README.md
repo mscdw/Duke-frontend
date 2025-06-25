@@ -25,3 +25,28 @@ This is a Streamlit-based UI for exploring and visualizing Avigilon API endpoint
 - Home: Overview and navigation.
 - Endpoints: Interact with all Avigilon API endpoints.
 - Active Events: Visualize ACTIVE events from all servers.
+
+---
+
+## Duke Frontend Service Setup (NSSM)
+
+Use [NSSM](https://nssm.cc) to run Duke Central as Windows services:
+
+* **Service Name**: `DukeFarmingFrontend`
+* **Path**: `C:\path\to\venv\Scripts\python.exe`
+* **Startup Dir**: `C:\path\to\Duke-Frontend`
+* **Arguments**:
+
+  ```
+  -m streamlit run Home.py --server.port 8501 --server.headless true
+  ```
+
+### Manage Services
+
+```bash
+
+net stop DukeFarmingFrontend
+net start DukeFarmingFrontend
+```
+
+---
